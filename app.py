@@ -26,7 +26,7 @@ def sessions(language):
         conn.close()
 
 
-
+# get questions
 @app.route('/questions/<int:id>')
 def questions(id):
     try:
@@ -56,6 +56,42 @@ def questions(id):
 
 
 
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+# get bot messages
+@app.route('/bot_messages/')
+def bot_messages():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM bot_texts")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+# get bot a single message
+@app.route('/bot_messages/<int:id>')
+def bot_messagesid(id):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM bot_texts WHERE id=%s",id)
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
     except Exception as e:
         print(e)
     finally:
