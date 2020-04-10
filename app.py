@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Flask,request, jsonify, make_response
 from flaskext.mysql import MySQL
 import pymysql
@@ -91,7 +92,7 @@ def bot_messagesid(id):
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
         cursor.execute("SELECT * FROM bot_texts WHERE id=%s ORDER BY id ASC",id)
-        rows = cursor.fetchall()
+        rows = cursor.fetchone()
         resp = jsonify(rows)
         resp.status_code = 200
         return resp
@@ -211,7 +212,7 @@ def add_student():
                 "INSERT INTO students(name,userid,language,exercise,fortunas,created_at,updated_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 (_name, _userid, _language, _exercise, _fortunas, cu_at, cu_at))
             conn.commit()
-            resp = jsonify(message=['Student added successfully!'])
+            resp = jsonify(success=True)
             resp.status_code = 200
             return resp
     except Exception as e:
@@ -258,6 +259,51 @@ def add_points():
     finally:
         cursor.close()
         conn.close()
+
+
+
+
+
+"""updated user's level"""
+@app.route('/student/level',methods=['POST'])
+def update_level():
+    try:
+        if not request.is_json:
+            return jsonify(message=['Invalid or empty data'])
+        _json = request.json
+        _userid = _json.get('userid', None)
+        _language = _json.get('language', None)
+
+        if not _language:
+            return jsonify(message=['Missing language'])
+        if not _userid:
+            return jsonify(message=['Missing userid'])
+
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM students WHERE userid=%s AND language=%s  ORDER BY id ASC",
+                       (_userid, _language))
+        stud = cursor.fetchall()
+        if len(stud) > 0:
+            cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            fortunas = stud[0]['level']
+            fortunas += 1
+            sql = "UPDATE students SET level=%s,updated_at=%s WHERE userid=%s AND language=%s"
+            data = (fortunas, cu_at, _userid, _language)
+            cursor.execute(sql, data)
+            conn.commit()
+            return jsonify(message=[f'{fortunas} level updated'])
+        else:
+            return not_found()
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
 
 """Get student messages"""
 @app.route('/student/messages')
