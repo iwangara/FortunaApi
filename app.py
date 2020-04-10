@@ -284,13 +284,57 @@ def CuMessages():
     _json = request.json
     _userid = _json.get('userid', None)
     _language = _json.get('language', None)
-    _messages = _json.get('count', None)
+
     if not _language:
         return jsonify(message=['Missing language'])
     if not _userid:
         return jsonify(message=['Missing userid'])
-    if not _messages:
-        return jsonify(message=['Missing messages'])
+
+    conn = mysql.connect()
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("SELECT messages FROM messages WHERE userid=%s AND language=%s  ORDER BY id ASC",
+                   (_userid, _language))
+    message = cursor.fetchall()
+    if len(message) > 0:
+        cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        fortunas = message[0]['messages']
+        fortunas += 1
+        sql = "UPDATE messages SET messages=%s,updated_at=%s WHERE userid=%s AND language=%s "
+        data = (fortunas, cu_at, _userid, _language)
+        cursor.execute(sql, data)
+        conn.commit()
+        return jsonify(message=[f'{_userid} msg bal: {fortunas} messages'])
+    else:
+        cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cursor.execute(
+            "INSERT INTO messages(userid,language,messages,created_at,updated_at) VALUES (%s,%s,%s,%s,%s)",
+            (_userid, _language, 0, cu_at, cu_at))
+        conn.commit()
+        resp = jsonify(message=['Student message saved successfully!'])
+        resp.status_code = 200
+        return resp
+
+#get live sessions
+@app.route('/admins/<string:language>/<int:userid>')
+def admins(language,userid):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(
+            "SELECT teachers.language,teachers.role,users.telegram_ID FROM teachers LEFT JOIN users on teachers.email=users.email WHERE language=%s AND telegram_ID=%s",
+            (language, userid))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
 
 
 @app.errorhandler(404)
