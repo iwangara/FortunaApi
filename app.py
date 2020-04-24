@@ -1,22 +1,29 @@
 # -*- coding: utf-8 -*-
-from flask import Flask,request, jsonify, make_response
+from flask import Flask,request, jsonify, json
 from flaskext.mysql import MySQL
 import pymysql
+import decimal
 from datetime import datetime
 mysql = MySQL()
+class MyJSONEncoder(json.JSONEncoder):
 
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            # Convert decimal instances to strings.
+            return str(obj)
+        return super(MyJSONEncoder, self).default(obj)
 app = Flask(__name__)
+app.json_encoder = MyJSONEncoder
 app.config.from_object('config.DevelopmentConfig')
 mysql.init_app(app)
 
 
-#get live sessions
 @app.route('/sessions/<string:language>')
 def sessions(language):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM livesessions WHERE  language=%s ORDER BY id ASC",language)
+        cursor.execute("SELECT * FROM livesessions WHERE  language=%s AND status=0 ORDER BY id ASC",language)
         rows = cursor.fetchall()
         resp = jsonify(rows)
         resp.status_code = 200
@@ -301,9 +308,41 @@ def update_level():
         cursor.close()
         conn.close()
 
+'''levels'''
+@app.route('/levels')
+def level():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT name,points FROM levels ORDER BY id ASC")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
+'''ranks'''
+@app.route('/ranks')
+def ranks():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT name,points,messages FROM ranks ORDER BY id ASC")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 """Get student messages"""
 @app.route('/student/messages')
@@ -360,7 +399,46 @@ def CuMessages():
         resp.status_code = 200
         return resp
 
-#get live sessions
+#get total points
+@app.route('/student/total/<string:language>/<int:userid>')
+def get_user_total_points(language,userid):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT userid, SUM(fortunas) as total FROM students WHERE userid=%s AND language=%s",(userid, language))
+        rows = cursor.fetchone()
+        print(rows)
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+#get distinct students
+@app.route('/student/dist/<string:language>')
+def get_distinct(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT DISTINCT userid FROM students WHERE  language=%s",(language,))
+        rows = cursor.fetchall()
+        print(rows)
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+#get if user is admin
 @app.route('/admins/<string:language>/<int:userid>')
 def admins(language,userid):
     try:
