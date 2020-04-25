@@ -345,13 +345,14 @@ def ranks():
         conn.close()
 
 """Get student messages"""
-@app.route('/student/messages')
-def student_messages():
+@app.route('/student/messages/<string:language>/<int:userid>')
+def student_messages(language,userid):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM messages ORDER BY id ASC")
-        rows = cursor.fetchall()
+        cursor.execute("SELECT messages FROM messages WHERE userid=%s AND language=%s ORDER BY id ASC",(userid, language))
+        rows = cursor.fetchone()
+        print(rows)
         resp = jsonify(rows)
         resp.status_code = 200
         return resp
