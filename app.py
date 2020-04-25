@@ -268,8 +268,35 @@ def add_points():
         conn.close()
 
 
-
-
+"""update student rank"""
+@app.route('/student/rank',methods=['POST'])
+def update_rank():
+    try:
+        if not request.is_json:
+            return jsonify(message=['Invalid or empty data'])
+        _json = request.json
+        _userid = _json.get('userid', None)
+        _language = _json.get('language', None)
+        _rank = _json.get('rank', None)
+        if not _language:
+            return jsonify(message=['Missing language'])
+        if not _userid:
+            return jsonify(message=['Missing userid'])
+        if not _rank:
+            return jsonify(message=['Missing rank'])
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sql = "UPDATE students SET user_rank=%s,updated_at=%s WHERE userid=%s AND language=%s"
+        data = (_rank, cu_at, _userid, _language)
+        cursor.execute(sql, data)
+        conn.commit()
+        return jsonify(message=[f'{_rank} updated'])
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 """updated user's level"""
 @app.route('/student/level',methods=['POST'])
