@@ -321,12 +321,13 @@ def update_level():
         if len(stud) > 0:
             cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             fortunas = stud[0]['level']
-            fortunas += 1
-            sql = "UPDATE students SET level=%s,updated_at=%s WHERE userid=%s AND language=%s"
-            data = (fortunas, cu_at, _userid, _language)
-            cursor.execute(sql, data)
-            conn.commit()
-            return jsonify(message=[f'{fortunas} level updated'])
+            if fortunas<4:
+                fortunas += 1
+                sql = "UPDATE students SET level=%s,updated_at=%s WHERE userid=%s AND language=%s"
+                data = (fortunas, cu_at, _userid, _language)
+                cursor.execute(sql, data)
+                conn.commit()
+                return jsonify(message=[f'{fortunas} level updated'])
         else:
             return not_found()
     except Exception as e:
