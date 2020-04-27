@@ -1,22 +1,29 @@
 # -*- coding: utf-8 -*-
-from flask import Flask,request, jsonify, make_response
+from flask import Flask,request, jsonify, json
 from flaskext.mysql import MySQL
 import pymysql
+import decimal
 from datetime import datetime
 mysql = MySQL()
+class MyJSONEncoder(json.JSONEncoder):
 
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            # Convert decimal instances to strings.
+            return str(obj)
+        return super(MyJSONEncoder, self).default(obj)
 app = Flask(__name__)
+app.json_encoder = MyJSONEncoder
 app.config.from_object('config.DevelopmentConfig')
 mysql.init_app(app)
 
 
-#get live sessions
 @app.route('/sessions/<string:language>')
 def sessions(language):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM livesessions WHERE  language=%s ORDER BY id ASC",language)
+        cursor.execute("SELECT * FROM livesessions WHERE  language=%s AND status=0 ORDER BY id ASC",language)
         rows = cursor.fetchall()
         resp = jsonify(rows)
         resp.status_code = 200
@@ -261,8 +268,35 @@ def add_points():
         conn.close()
 
 
-
-
+"""update student rank"""
+@app.route('/student/rank',methods=['POST'])
+def update_rank():
+    try:
+        if not request.is_json:
+            return jsonify(message=['Invalid or empty data'])
+        _json = request.json
+        _userid = _json.get('userid', None)
+        _language = _json.get('language', None)
+        _rank = _json.get('rank', None)
+        if not _language:
+            return jsonify(message=['Missing language'])
+        if not _userid:
+            return jsonify(message=['Missing userid'])
+        if not _rank:
+            return jsonify(message=['Missing rank'])
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sql = "UPDATE students SET user_rank=%s,updated_at=%s WHERE userid=%s AND language=%s"
+        data = (_rank, cu_at, _userid, _language)
+        cursor.execute(sql, data)
+        conn.commit()
+        return jsonify(message=[f'{_rank} updated'])
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 """updated user's level"""
 @app.route('/student/level',methods=['POST'])
@@ -287,12 +321,13 @@ def update_level():
         if len(stud) > 0:
             cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             fortunas = stud[0]['level']
-            fortunas += 1
-            sql = "UPDATE students SET level=%s,updated_at=%s WHERE userid=%s AND language=%s"
-            data = (fortunas, cu_at, _userid, _language)
-            cursor.execute(sql, data)
-            conn.commit()
-            return jsonify(message=[f'{fortunas} level updated'])
+            if fortunas<4:
+                fortunas += 1
+                sql = "UPDATE students SET level=%s,updated_at=%s WHERE userid=%s AND language=%s"
+                data = (fortunas, cu_at, _userid, _language)
+                cursor.execute(sql, data)
+                conn.commit()
+                return jsonify(message=[f'{fortunas} level updated'])
         else:
             return not_found()
     except Exception as e:
@@ -301,18 +336,51 @@ def update_level():
         cursor.close()
         conn.close()
 
-
-
-
-
-"""Get student messages"""
-@app.route('/student/messages')
-def student_messages():
+'''levels'''
+@app.route('/levels')
+def level():
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM messages ORDER BY id ASC")
+        cursor.execute("SELECT name,points FROM levels ORDER BY id ASC")
         rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+'''ranks'''
+@app.route('/ranks')
+def ranks():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT name,points,messages FROM ranks ORDER BY id ASC")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+"""Get student messages"""
+@app.route('/student/messages/<string:language>/<int:userid>')
+def student_messages(language,userid):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT messages FROM messages WHERE userid=%s AND language=%s ORDER BY id ASC",(userid, language))
+        rows = cursor.fetchone()
+        print(rows)
         resp = jsonify(rows)
         resp.status_code = 200
         return resp
@@ -360,7 +428,46 @@ def CuMessages():
         resp.status_code = 200
         return resp
 
-#get live sessions
+#get total points
+@app.route('/student/total/<string:language>/<int:userid>')
+def get_user_total_points(language,userid):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT userid, SUM(fortunas) as total FROM students WHERE userid=%s AND language=%s",(userid, language))
+        rows = cursor.fetchone()
+        print(rows)
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+#get distinct students
+@app.route('/student/dist/<string:language>')
+def get_distinct(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT DISTINCT userid FROM students WHERE  language=%s",(language,))
+        rows = cursor.fetchall()
+        print(rows)
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+#get if user is admin
 @app.route('/admins/<string:language>/<int:userid>')
 def admins(language,userid):
     try:
