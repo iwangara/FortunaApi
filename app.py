@@ -372,6 +372,60 @@ def ranks():
         cursor.close()
         conn.close()
 
+'''studyrooms'''
+@app.route('/studyrooms')
+def studyrooms():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT classroom,groupLink FROM studyrooms ORDER BY id ASC")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+'''classrooms'''
+@app.route('/classrooms')
+def classrooms():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT classroom,groupLink FROM classrooms ORDER BY id ASC")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+"""commands"""
+@app.route('/commands')
+def commands():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT command,description,text,availability FROM bot_commands ORDER BY availability ASC")
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
 """Get student messages"""
 @app.route('/student/messages/<string:language>/<int:userid>')
 def student_messages(language,userid):
@@ -434,7 +488,7 @@ def get_user_total_points(language,userid):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT userid, SUM(fortunas) as total FROM students WHERE userid=%s AND language=%s",(userid, language))
+        cursor.execute("SELECT userid,name, SUM(fortunas) as total FROM students WHERE userid=%s AND language=%s",(userid, language))
         rows = cursor.fetchone()
         print(rows)
         resp = jsonify(rows)
@@ -487,6 +541,24 @@ def admins(language,userid):
         conn.close()
 
 
+#get if user is admin
+@app.route('/teachers/<string:language>')
+def teachers(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(
+            "SELECT teachers.language,teachers.role,users.username FROM teachers LEFT JOIN users on teachers.email=users.email WHERE language=%s",
+            (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
