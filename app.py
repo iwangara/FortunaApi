@@ -560,7 +560,13 @@ def teachers(language):
         cursor.close()
         conn.close()
 
-
+@app.route('/data')
+def names():
+    data = {
+        "first_names": ["John", "Jacob", "Julie", "Jennifer"],
+        "last_names": ["Connor", "Johnson", "Cloud", "Ray"]
+    }
+    return jsonify(data)
 
 @app.errorhandler(404)
 def not_found(error=None):
