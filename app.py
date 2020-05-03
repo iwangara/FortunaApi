@@ -568,6 +568,7 @@ def names():
     }
     return jsonify(data)
 
+
 @app.errorhandler(404)
 def not_found(error=None):
     message = {
