@@ -62,6 +62,53 @@ def questions(id):
 
             resp.status_code = 200
             return resp
+        elif stype=='Seshat':
+            cursor.execute(f"""SELECT * FROM seshats WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+
+            resp.status_code = 200
+            return resp
+
+        elif stype=="Tyche":
+            cursor.execute(f"""SELECT * FROM tyches WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+
+            resp.status_code = 200
+            return resp
+
+        elif stype=="Leizi":
+            cursor.execute(f"""SELECT * FROM leizis WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+
+            resp.status_code = 200
+            return resp
+
+        elif stype=="Odin":
+            cursor.execute(f"""SELECT * FROM odins WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+
+            resp.status_code = 200
+            return resp
+
+        elif stype=="Zamo":
+            cursor.execute(f"""SELECT * FROM zamos WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+
+            resp.status_code = 200
+            return resp
+
+        elif stype=="Africa":
+            cursor.execute(f"""SELECT * FROM africas WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+
+            resp.status_code = 200
+            return resp
 
 
 
@@ -76,7 +123,6 @@ def questions(id):
 # get bot messages
 @app.route('/bot_messages')
 def bot_messages():
-
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
