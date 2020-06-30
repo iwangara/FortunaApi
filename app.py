@@ -98,7 +98,6 @@ def questions(id):
             cursor.execute(f"""SELECT * FROM zamos WHERE language=%s AND  session1 IN {sesions} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
-
             resp.status_code = 200
             return resp
 
@@ -106,11 +105,42 @@ def questions(id):
             cursor.execute(f"""SELECT * FROM africas WHERE language=%s AND  session1 IN {sesions} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
-
+            resp.status_code = 200
+            return resp
+        elif stype=="Wala":
+            cursor.execute(f"""SELECT * FROM walas WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            ques_id =exercise[0]['id']
+            cursor.execute(f"""SELECT * FROM wala_subquestions WHERE language=%s AND  sub_question_id =%s""", (langauge,ques_id))
+            walas = cursor.fetchall()
+            resp = jsonify(walas)
             resp.status_code = 200
             return resp
 
+        elif stype == "Kadlu":
+            cursor.execute(f"""SELECT * FROM kadlus WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            ques_id = exercise[0]['id']
+            cursor.execute(f"""SELECT * FROM kadlu_subquestions WHERE language=%s AND  sub_question_id =%s""",
+                           (langauge, ques_id))
+            kadlus = cursor.fetchall()
+            resp = jsonify(kadlus)
+            resp.status_code = 200
+            return resp
 
+        elif stype == "Nuwa":
+            cursor.execute(f"""SELECT * FROM nuwas WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+            resp.status_code = 200
+            return resp
+
+        elif stype == "Gaia":
+            cursor.execute(f"""SELECT * FROM gaias WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            exercise = cursor.fetchall()
+            resp = jsonify(exercise)
+            resp.status_code = 200
+            return resp
 
     except Exception as e:
         print(e)
@@ -565,8 +595,6 @@ def get_distinct(language):
         conn.close()
 
 
-
-
 #get if user is admin
 @app.route('/admins/<string:language>/<int:userid>')
 def admins(language,userid):
@@ -606,14 +634,7 @@ def teachers(language):
         cursor.close()
         conn.close()
 
-@app.route('/data')
-def names():
-    data = {
-        "first_names": ["John", "Jacob", "Julie", "Jennifer"],
-        "last_names": ["Connor", "Johnson", "Cloud", "Ray"],
-        "last_names": ["Connor", "Johnson", "Cloud", "Ray"]
-    }
-    return jsonify(data)
+
 
 
 @app.errorhandler(404)
