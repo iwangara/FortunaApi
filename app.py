@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-from flask import Flask,request, jsonify, json
+from flask import Flask, request, jsonify, json
 from flaskext.mysql import MySQL
 import pymysql
 import decimal
 from datetime import datetime
+
 mysql = MySQL()
+
+
 class MyJSONEncoder(json.JSONEncoder):
 
     def default(self, obj):
@@ -12,6 +15,8 @@ class MyJSONEncoder(json.JSONEncoder):
             # Convert decimal instances to strings.
             return str(obj)
         return super(MyJSONEncoder, self).default(obj)
+
+
 app = Flask(__name__)
 app.json_encoder = MyJSONEncoder
 app.config.from_object('config.DevelopmentConfig')
@@ -23,7 +28,7 @@ def sessions(language):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM livesessions WHERE  language=%s AND status=0 ORDER BY id ASC",language)
+        cursor.execute("SELECT * FROM livesessions WHERE  language=%s AND status=0 ORDER BY id ASC", language)
         rows = cursor.fetchall()
         resp = jsonify(rows)
         resp.status_code = 200
@@ -41,84 +46,84 @@ def questions(id):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM livesessions WHERE  id=%s ORDER BY id ASC",id)
+        cursor.execute("SELECT * FROM livesessions WHERE  id=%s ORDER BY id ASC", id)
         livesession = cursor.fetchall()
+        sess_id =livesession[0]['id']
         langauge = livesession[0]['language']
         stype = livesession[0]['type']
-        session =livesession[0]['session']
+        session = livesession[0]['session']
         tmp = session.split(",")
-        sess =[]
+        sess = []
         for x in tmp:
             sess.append(f"{str(x)}")
-        sesions =tuple(sess)#','.join(sess)
-
-
+        sesions = tuple(sess)  # ','.join(sess)
 
         print(sesions)
-        if stype=='Apollo':
-            cursor.execute(f"""SELECT * FROM apollos WHERE language=%s AND  session1 IN {sesions} """,langauge)
-            exercise =cursor.fetchall()
+        if stype == 'Apollo':
+            cursor.execute(f"""SELECT * FROM apollos WHERE language=%s AND  sessionID={sess_id} """, langauge)
+            exercise = cursor.fetchall()
             resp = jsonify(exercise)
 
             resp.status_code = 200
             return resp
-        elif stype=='Seshat':
-            cursor.execute(f"""SELECT * FROM seshats WHERE language=%s AND  session1 IN {sesions} """, langauge)
+        elif stype == 'Seshat':
+            cursor.execute(f"""SELECT * FROM seshats WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
 
             resp.status_code = 200
             return resp
 
-        elif stype=="Tyche":
-            cursor.execute(f"""SELECT * FROM tyches WHERE language=%s AND  session1 IN {sesions} """, langauge)
+        elif stype == "Tyche":
+            cursor.execute(f"""SELECT * FROM tyches WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
 
             resp.status_code = 200
             return resp
 
-        elif stype=="Leizi":
-            cursor.execute(f"""SELECT * FROM leizis WHERE language=%s AND  session1 IN {sesions} """, langauge)
+        elif stype == "Leizi":
+            cursor.execute(f"""SELECT * FROM leizis WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
 
             resp.status_code = 200
             return resp
 
-        elif stype=="Odin":
-            cursor.execute(f"""SELECT * FROM odins WHERE language=%s AND  session1 IN {sesions} """, langauge)
+        elif stype == "Odin":
+            cursor.execute(f"""SELECT * FROM odins WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
 
             resp.status_code = 200
             return resp
 
-        elif stype=="Zamo":
-            cursor.execute(f"""SELECT * FROM zamos WHERE language=%s AND  session1 IN {sesions} """, langauge)
+        elif stype == "Zamo":
+            cursor.execute(f"""SELECT * FROM zamos WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
             resp.status_code = 200
             return resp
 
-        elif stype=="Africa":
-            cursor.execute(f"""SELECT * FROM africas WHERE language=%s AND  session1 IN {sesions} """, langauge)
+        elif stype == "Africa":
+            cursor.execute(f"""SELECT * FROM africas WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
             resp.status_code = 200
             return resp
-        elif stype=="Wala":
-            cursor.execute(f"""SELECT * FROM walas WHERE language=%s AND  session1 IN {sesions} """, langauge)
+        elif stype == "Wala":
+            cursor.execute(f"""SELECT * FROM walas WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
-            ques_id =exercise[0]['id']
-            cursor.execute(f"""SELECT * FROM wala_subquestions WHERE language=%s AND  sub_question_id =%s""", (langauge,ques_id))
+            ques_id = exercise[0]['id']
+            cursor.execute(f"""SELECT * FROM wala_subquestions WHERE language=%s AND  sub_question_id =%s""",
+                           (langauge, ques_id))
             walas = cursor.fetchall()
             resp = jsonify(walas)
             resp.status_code = 200
             return resp
 
         elif stype == "Kadlu":
-            cursor.execute(f"""SELECT * FROM kadlus WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            cursor.execute(f"""SELECT * FROM kadlus WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             ques_id = exercise[0]['id']
             cursor.execute(f"""SELECT * FROM kadlu_subquestions WHERE language=%s AND  sub_question_id =%s""",
@@ -129,14 +134,14 @@ def questions(id):
             return resp
 
         elif stype == "Nuwa":
-            cursor.execute(f"""SELECT * FROM nuwas WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            cursor.execute(f"""SELECT * FROM nuwas WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
             resp.status_code = 200
             return resp
 
         elif stype == "Gaia":
-            cursor.execute(f"""SELECT * FROM gaias WHERE language=%s AND  session1 IN {sesions} """, langauge)
+            cursor.execute(f"""SELECT * FROM gaias WHERE language=%s AND  sessionID={sess_id} """, langauge)
             exercise = cursor.fetchall()
             resp = jsonify(exercise)
             resp.status_code = 200
@@ -147,7 +152,6 @@ def questions(id):
     finally:
         cursor.close()
         conn.close()
-
 
 
 # get bot messages
@@ -167,14 +171,14 @@ def bot_messages():
         cursor.close()
         conn.close()
 
+
 # get bot a single message
 @app.route('/bot_messages/<int:id>')
 def bot_messagesid(id):
-
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM bot_texts WHERE id=%s ORDER BY id ASC",id)
+        cursor.execute("SELECT * FROM bot_texts WHERE id=%s ORDER BY id ASC", id)
         rows = cursor.fetchone()
         resp = jsonify(rows)
         resp.status_code = 200
@@ -187,10 +191,11 @@ def bot_messagesid(id):
 
 
 """Student resource"""
-#get all students
+
+
+# get all students
 @app.route('/students')
 def students():
-
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
@@ -204,6 +209,7 @@ def students():
     finally:
         cursor.close()
         conn.close()
+
 
 # get single student per language per exercise
 @app.route('/student')
@@ -219,7 +225,8 @@ def student():
         if _userid and _language and _exercise:
             conn = mysql.connect()
             cursor = conn.cursor(pymysql.cursors.DictCursor)
-            cursor.execute("SELECT * FROM students WHERE userid=%s AND language=%s AND exercise=%s ORDER BY id ASC",(_userid,_language,_exercise))
+            cursor.execute("SELECT * FROM students WHERE userid=%s AND language=%s AND exercise=%s ORDER BY id ASC",
+                           (_userid, _language, _exercise))
             rows = cursor.fetchone()
             resp = jsonify(rows)
             resp.status_code = 200
@@ -232,6 +239,7 @@ def student():
         cursor.close()
         conn.close()
 
+
 # get student per language
 @app.route('/student/language')
 def student_language():
@@ -243,10 +251,11 @@ def student_language():
         _language = _json['language']
 
         # print(_json)
-        if _userid and _language :
+        if _userid and _language:
             conn = mysql.connect()
             cursor = conn.cursor(pymysql.cursors.DictCursor)
-            cursor.execute("SELECT * FROM students WHERE userid=%s AND language=%s ORDER BY id ASC",(_userid,_language))
+            cursor.execute("SELECT * FROM students WHERE userid=%s AND language=%s ORDER BY id ASC",
+                           (_userid, _language))
             rows = cursor.fetchall()
             resp = jsonify(rows)
             resp.status_code = 200
@@ -259,8 +268,11 @@ def student_language():
         cursor.close()
         conn.close()
 
+
 """create new student language exercise"""
-@app.route('/student/new',methods=['POST'])
+
+
+@app.route('/student/new', methods=['POST'])
 def add_student():
     try:
         if not request.is_json:
@@ -306,7 +318,9 @@ def add_student():
 
 
 """updated user's fortunas"""
-@app.route('/student/point',methods=['POST'])
+
+
+@app.route('/student/point', methods=['POST'])
 def add_points():
     try:
         if not request.is_json:
@@ -345,7 +359,9 @@ def add_points():
 
 
 """update student rank"""
-@app.route('/student/rank',methods=['POST'])
+
+
+@app.route('/student/rank', methods=['POST'])
 def update_rank():
     try:
         if not request.is_json:
@@ -374,8 +390,11 @@ def update_rank():
         cursor.close()
         conn.close()
 
+
 """updated user's level"""
-@app.route('/student/level',methods=['POST'])
+
+
+@app.route('/student/level', methods=['POST'])
 def update_level():
     try:
         if not request.is_json:
@@ -397,7 +416,7 @@ def update_level():
         if len(stud) > 0:
             cu_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             fortunas = stud[0]['level']
-            if fortunas<4:
+            if fortunas < 4:
                 fortunas += 1
                 sql = "UPDATE students SET level=%s,updated_at=%s WHERE userid=%s AND language=%s"
                 data = (fortunas, cu_at, _userid, _language)
@@ -412,7 +431,10 @@ def update_level():
         cursor.close()
         conn.close()
 
+
 '''levels'''
+
+
 @app.route('/levels')
 def level():
     try:
@@ -430,8 +452,9 @@ def level():
         conn.close()
 
 
-
 '''ranks'''
+
+
 @app.route('/ranks')
 def ranks():
     try:
@@ -448,7 +471,10 @@ def ranks():
         cursor.close()
         conn.close()
 
+
 '''studyrooms'''
+
+
 @app.route('/studyrooms')
 def studyrooms():
     try:
@@ -465,7 +491,10 @@ def studyrooms():
         cursor.close()
         conn.close()
 
+
 '''classrooms'''
+
+
 @app.route('/classrooms')
 def classrooms():
     try:
@@ -483,8 +512,9 @@ def classrooms():
         conn.close()
 
 
-
 """commands"""
+
+
 @app.route('/commands')
 def commands():
     try:
@@ -503,12 +533,15 @@ def commands():
 
 
 """Get student messages"""
+
+
 @app.route('/student/messages/<string:language>/<int:userid>')
-def student_messages(language,userid):
+def student_messages(language, userid):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT messages FROM messages WHERE userid=%s AND language=%s ORDER BY id ASC",(userid, language))
+        cursor.execute("SELECT messages FROM messages WHERE userid=%s AND language=%s ORDER BY id ASC",
+                       (userid, language))
         rows = cursor.fetchone()
         print(rows)
         resp = jsonify(rows)
@@ -520,8 +553,11 @@ def student_messages(language,userid):
         cursor.close()
         conn.close()
 
+
 """Create or update messages"""
-@app.route('/student/messages',methods=['POST'])
+
+
+@app.route('/student/messages', methods=['POST'])
 def CuMessages():
     if not request.is_json:
         return jsonify(message=['Invalid or empty data'])
@@ -558,13 +594,15 @@ def CuMessages():
         resp.status_code = 200
         return resp
 
-#get total points
+
+# get total points
 @app.route('/student/total/<string:language>/<int:userid>')
-def get_user_total_points(language,userid):
+def get_user_total_points(language, userid):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT userid,name, SUM(fortunas) as total FROM students WHERE userid=%s AND language=%s",(userid, language))
+        cursor.execute("SELECT userid,name, SUM(fortunas) as total FROM students WHERE userid=%s AND language=%s",
+                       (userid, language))
         rows = cursor.fetchone()
         print(rows)
         resp = jsonify(rows)
@@ -576,13 +614,14 @@ def get_user_total_points(language,userid):
         cursor.close()
         conn.close()
 
-#get distinct students
+
+# get distinct students
 @app.route('/student/dist/<string:language>')
 def get_distinct(language):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT DISTINCT userid FROM students WHERE  language=%s",(language,))
+        cursor.execute("SELECT DISTINCT userid FROM students WHERE  language=%s", (language,))
         rows = cursor.fetchall()
         print(rows)
         resp = jsonify(rows)
@@ -595,9 +634,9 @@ def get_distinct(language):
         conn.close()
 
 
-#get if user is admin
+# get if user is admin
 @app.route('/admins/<string:language>/<int:userid>')
-def admins(language,userid):
+def admins(language, userid):
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
@@ -615,7 +654,7 @@ def admins(language,userid):
         conn.close()
 
 
-#get if user is admin
+# get if user is admin
 @app.route('/teachers/<string:language>')
 def teachers(language):
     try:
@@ -635,7 +674,192 @@ def teachers(language):
         conn.close()
 
 
+#############SOLO LEARN################
+@app.route('/solo/africa/<string:language>')
+def solo_africa(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM africas WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
+
+@app.route('/solo/apollo/<string:language>')
+def solo_apollo(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM apollos WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/solo/gaia/<string:language>')
+def solo_gaia(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM gaias WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/solo/kadlu/<string:language>')
+def solo_kadlu(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM kadlu_subquestions WHERE language=%s  ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/solo/leizi/<string:language>')
+def solo_leizi(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM leizis WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/solo/nuwa/<string:language>')
+def solo_nuwa(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM nuwas WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/solo/odin/<string:language>')
+def solo_odin(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM odins WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/solo/seshat/<string:language>')
+def solo_seshat(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM seshats WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+@app.route('/solo/tyche/<string:language>')
+def solo_tyche(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM tyches WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/solo/wala/<string:language>')
+def solo_wala(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM wala_subquestions WHERE language=%s  ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/solo/zamo/<string:language>')
+def solo_zamo(language):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM zamos WHERE language=%s AND validated=1 ORDER BY RAND() LIMIT 200", (language,))
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.errorhandler(404)
 def not_found(error=None):
@@ -647,7 +871,6 @@ def not_found(error=None):
     resp.status_code = 404
 
     return resp
-
 
 
 if __name__ == '__main__':
